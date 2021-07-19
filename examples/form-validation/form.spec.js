@@ -1,6 +1,7 @@
 import {
     required,
     isBetween,
+    isNumber,
     validateMeasurement,
     patientForm,
     isFormValid
@@ -42,6 +43,20 @@ describe('isBetween', () => {
     })
 })
 
+describe('isNumber', () => {
+    it('is invalid when undefined', () => {
+        expect(isNumber(undefined)).toEqual({ valid: false, message: 'Must be a number'})
+    })
+
+    it('is invalid when undefined', () => {
+        expect(isNumber('test string')).toEqual({ valid: false, message: 'Must be a number'})
+    })
+
+    it('is invalid when undefined', () => {
+        expect(isNumber(42)).toEqual({ valid: true })
+    })
+})
+
 describe('validateMeasurement', () => {
     it('returns invalid for input', () => {
         const constraints = { min: 10, max: 30 }
@@ -55,6 +70,11 @@ describe('validateMeasurement', () => {
         expect(actual).toEqual({ valid: false, message: 'Must be between 10 and 30' })
     })
 
+    it('returns invalid when not a string', () => {
+        const constraints = { min: 10, max: 30 }
+        const actual = validateMeasurement('test string', { constraints, nullable: false })
+        expect(actual).toEqual({ valid: false, message: 'Must be a number' })
+    })
 
     it('returns valid when value is in range', () => {
         const constraints = { min: 10, max: 30 }
@@ -122,5 +142,17 @@ describe('patientForm', () => {
         })
 
         expect(form.weight).toEqual({ valid: false, message: 'Must be between 30 and 200' })
+    })
+
+    it('validates if weight is number', () => {
+        const form = patientForm({
+            ...validPatient,
+            weight: {
+                value: 'test string',
+                units: 'kg'
+            }
+        })
+
+        expect(form.weight).toEqual({ valid: false, message: 'Must be a number' })
     })
 })
