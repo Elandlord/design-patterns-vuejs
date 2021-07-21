@@ -1,4 +1,4 @@
 import { createApp } from 'vue'
-import App from './examples/form-validation/form-validation.vue'
+import App from './examples/render-functions/app.vue'
 
 createApp(App).mount('#app')

@@ -1,4 +1,4 @@
-import { h } from 'vue'
+import { h, toRefs, watch, ref } from 'vue'
 
 const withTabId = (content) => ({
   props: {
@@ -11,14 +11,14 @@ const withTabId = (content) => ({
 })
 
 export const TabContent = withTabId({
-  render() {
-    return h(this.$slots.default)
+  setup(props, { slots }) {
+    return () => h(slots.default)
   }
 })
 
 export const Tab = withTabId({
-  render() {
-    return h('div', h(this.$slots.default))
+  setup(props, { slots }) {
+      return () => h('div', h(slots.default))
   }
 })
 
@@ -27,38 +27,49 @@ export const TabContainer = {
     activeTabId: String
   },
 
-
   emits: ['update:activeTabId'],
 
-  render() {
-    const $slots = this.$slots.default()
+  setup(props, { attrs, slots, emit }) {
+    let content = ref()
+
+    const { activeTabId } = toRefs(props)
+
+    const $slots = slots.default()
     const tabs = $slots
-      .filter(slot => slot.type === Tab)
-      .map(tab => {
-        return h(
-          tab,
+        .filter(slot => slot.type === Tab)
+        .map(tab => {
+          return h(
+              tab,
+              {
+                class: {
+                  tab: true,
+                  active: tab.props.tabId === activeTabId.value
+                },
+                onClick: () => {
+                  emit('update:activeTabId', tab.props.tabId)
+                }
+              }
+          )
+        })
+
+      watch(
+          () => activeTabId.value,
+          (newActiveTabId, oldActiveTabId) => {
+              content = $slots.find(slot =>
+                  slot.type === TabContent &&
+                  slot.props.tabId === newActiveTabId
+              );
+          },
           {
-            class: {
-              tab: true,
-              active: tab.props.tabId === this.activeTabId
-            },
-            onClick: () => {
-              this.$emit('update:activeTabId', tab.props.tabId)
-            }
+              immediate: true,
           }
-        )
-      })
+      );
 
-    const content = $slots.find(slot => 
-      slot.type === TabContent &&
-      slot.props.tabId === this.activeTabId
-    )
-
-    return [
+    return () => [
       h(() => h('div', { class: 'tabs' }, tabs)),
       h(() => h('div', { class: 'content' }, content)),
     ]
-  }
+  },
 }
 
 const style = `
